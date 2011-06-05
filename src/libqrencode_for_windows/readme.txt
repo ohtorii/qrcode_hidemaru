@@ -1,9 +1,9 @@
-----------------------------------------------------------------------------
+ï»¿----------------------------------------------------------------------------
 libqrencode_for_windows
 ----------------------------------------------------------------------------
 
-qrencode-3.1.1.tar.gz ‚ğ GNU Lesser General Public License (LGPL)  ‚É]‚¢ VisualStudio2010‚Åƒrƒ‹ƒh‚Å‚«‚é‚æ‚¤‰ü•Ï‚µÄ”z•zB
+qrencode-3.1.1.tar.gz ã‚’ GNU Lesser General Public License (LGPL)  ã«å¾“ã„ VisualStudio2010ã§ãƒ“ãƒ«ãƒ‰ã§ãã‚‹ã‚ˆã†æ”¹å¤‰ã—å†é…å¸ƒã€‚
 
-ƒIƒŠƒWƒiƒ‹‚Ì“üèæ
+ã‚ªãƒªã‚¸ãƒŠãƒ«ã®å…¥æ‰‹å…ˆ
 http://fukuchi.org/works/qrencode/index.html
 
