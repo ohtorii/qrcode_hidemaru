@@ -1,0 +1,334 @@
+/*秀丸からQRコードを生成するマクロ
+
+＊インストール
+    下記ファイルをスクリプトディレクトリへコピーしてください。
+        qrcode.mac
+        qrcode.hilight
+        qrcode_hidemaru.exe
+    必ず同じディレクトリにコピーしてください。別々のディレクトリにコピーする
+    とマクロが動作しません。
+
+
+＊使い方
+    選択範囲があればその範囲を変換します。
+    選択範囲がなければファイル全体を変換します。
+
+＊動作確認
+    下記手順で簡単に動作確認できます。
+    1.ファイル -> 新規作成
+    2.test とか適当に書き込む
+    3.本マクロを起動します
+    4.新しい秀丸にQRコードが表示されます
+    5.携帯のバーコードリーダーでQRコードを読み取ってきちんと表示できれば
+    動作確認完了です。
+    6.お疲れ様でした。
+
+＊精度
+    ・自分の環境で実測したところ約８００文字前後で読み取れなくなりました。
+      「モニタ性能・カメラ性能」によってかなり前後するはずです。
+      文字数は秀丸エディタのステータスバーに表示されます参考にしてください。
+    ・QRコードは画面上での大きさが小さい方が認識しやすいようです。
+      環境依存だと思うので、大きい方が認識しやすいならマクロ中のフォント設定
+      ($g_font_config)を変更してみてください。
+
+＊設定
+    ・文字コードはShift-JIS推奨です、通常はShift-JISに設定されているはずなの
+      で特別意識する必要はないはずです。
+      UNICODEを日本語の範囲で使用している限りはうまく動きますが、日本語以外
+      を使用していると?に変換してからQRコードにします。
+    ・秀丸エディタ上で白黒画像を表示するために、秀丸の設定を書き換えています。
+      書き換えた内容は「メニュー -> その他 -> ファイルタイプ別の設定」から
+      確認できます。
+      「一時的な設定」なので保存しない限り秀丸エディタに反映することはありま
+      せん。
+
+＊Q&A
+    (Q)携帯で読み取ると文字化けします。
+    (A)秀丸の文字コードがShift-JISかどうかを確認してください。
+
+    (Q)QRコードのエンコードモードは？
+    (A)バイナリモードです。「数字・英数字・漢字」ごとの最適化は行っていません、
+       手抜きです。
+
+    (Q)バーコードではなく err:encode と表示される
+    (A)文字が長すぎるとそのようなエラーが表示されます。エンコードしたい文字
+       を短くしてください。
+
+    (Q)バーコードをうまく認識しない
+    (A1)マクロ中のフォント設定($g_font_config)を変更してみてください。
+        それでもうまくいかないときは諦めてください。
+        自分の環境では文字数が８００文字を超えると認識にくくなりました。
+    (A2)webサービスで生成したQRコードも読み取りエラーとなるときは、
+       液晶モニタ越しにQRコードを認識させることが、そもそも難しいかもしれません。
+
+    (Q)QRコードに変換できる仕様上の最大長は？
+    (A)仕様上は2953文字までですが、実測したところ８００文字前後で読み取れなくなり
+       ました、液晶モニタでは厳しいようです。
+
+    (Q)連結QRコードに対応していますか。
+    (A)対応していません。
+       面倒なのでやる気もないです。
+
+＊動かない
+    DLLが足りない的なメッセージが表示されたら「VisualStudio 2010」のランタイムが
+    足りないかもしれません。
+    「Microsoft Visual C++ 2010 Redistributable Package (x86)」でググって、
+    ダウンロードしてインストールしておいてください。
+
+
+＊QRコード活用
+・メール送信(SoftBank)
+MAILTO:foo@bar.hoge.com
+SUBJECT:テスト
+BODY:ちなみに、SoftBankは改行が効きませんでした。
+
+・電話帳登録
+MEMORY:メモ
+NAME1:羽田 大鳥居
+NAME2:ハネダ オオトリイ
+MAIL1:foo@bar.hoge.com
+TEL1:110
+TEL2:119
+ADD:東京都大田区羽田５丁目
+
+
+＊おまじない
+    QRコードは、株式会社デンソーウェーブの登録商標です。
+    SoftBank はソフトバンク株式会社の登録商標です。
+
+
+＊連絡先
+http://d.hatena.ne.jp/ohtorii/
+*/
+
+
+
+////////////////////////////////////////////////////////////////////////
+//		ユーザーカスタマイズ
+//
+//		・QRコードを認識しにくいときは「フォント名・フォントサイズ」を
+//		  カスタマイズしてください。
+//		・エラー訂正レベルはhighestにしても認識率は体感できるほど変わらないようです。
+////////////////////////////////////////////////////////////////////////
+
+/*	フォント名＋フォントサイズ(単位はポイント)
+*/
+//$g_font_config	= "xFont:(Small Fonts) xFontPoint:2 xFontDecimal:3";
+$g_font_config	= "xFont:(ＭＳ ゴシック) xFontPoint:1 xFontDecimal:0";
+
+/*	QRコードのエラー訂正レベル
+l	- lowest
+m
+q
+h	- highest
+*/
+$g_level = "l";
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////
+//		マクロ本体
+////////////////////////////////////////////////////////////////////////
+//QRコードを生成するプログラム
+$g_exe_path				= currentmacrodirectory + "\\qrcode_hidemaru.exe";
+
+//強調表示
+$g_hilight_path 		= currentmacrodirectory + "\\qrcode.hilight";
+
+//テンポラリファイル名（ベース名）
+//環境変数TMPのディレクトリに生成する。
+$g_tmpfile_base_name 	= "hidemaru_qrcode_tmp";
+
+//テンポラリファイル（絶対パス）
+$g_tmp_filename = "";
+
+call Main;
+call RemoveTmpFile;
+//携帯で読み込んだらすぐに閉じるので変更なしにする
+clearupdated;
+endmacro;
+
+
+
+
+
+Main:
+	if(rectselecting){
+		message("矩形選択は未対応です");
+		return false;
+	}
+
+	if(selecting){
+		call SaveToFileSelecting;
+	}else{
+		call SaveToFileAll;
+	}
+	if(! ##return){
+		return false;
+	}
+
+	newfile;
+	$$fn 	= $g_tmp_filename;
+	$$arg 	= $g_level + " " + $$fn;
+
+	begingroupundo;
+	disabledraw
+	runex "cmd.exe /C " + "\"" + $g_exe_path + "\"" + " "  + $$arg, 1,
+		0, "",
+		5, "",
+		0, "",
+		0, "",
+		2, 1, 0;
+	if(! result){
+		return false;
+	}
+	if(linecount2 < 4){
+		return false;
+	}
+
+	call ReplaceResult;
+	call ChangeDisplay;
+	call ChangeFont;
+	enabledraw;
+	endgroupundo;
+	return true;
+
+
+SaveToFileSelecting:
+	$$text = gettext2(seltopcolumn,seltoplineno,selendcolumn,selendlineno,1);
+	call GetTempFile;
+	if(! ##return){
+		return false;
+	}
+	call MakeTmpFile;
+	if(! ##return){
+		return false;
+	}
+
+	##cur_hidemaru = hidemaruhandle(0);
+	openfile "/h " + $g_tmp_filename, noaddhist, sjis;
+	##old_hidemaru = hidemaruhandle(0);
+	insert($$text);
+	save;
+	setactivehidemaru ##cur_hidemaru;
+	closehidemaruforced ##old_hidemaru;
+	return true;
+
+
+SaveToFileAll:
+	call GetTempFile;
+	if(! ##return){
+		return false;
+	}
+	call MakeTmpFile;
+	if(! ##return){
+		return false;
+	}
+
+	//備考：日本語をUNICODEで保存している場合の対策あり。
+	disableerrormsg;
+	appendsave $g_tmp_filename, noaddhist, sjis;
+	##ret = result;
+	enableerrormsg;
+	if(! ##ret){
+		message("テンポラリファイルへの書き込みに失敗しました");
+		return false;
+	}
+	return true;
+
+/*	余白を挿入する
+*/
+ReplaceResult:
+	gofiletop;
+	replaceallfast "0","　",regular;
+	gofiletop;
+	replaceallfast "1","■",regular;
+
+	gofiletop;
+	replaceallfast "^","        ",regular;
+	gofiletop;
+	insert("\n\n\n\n");
+	gofileend;
+	insert("\n\n");
+	gofiletop;
+	return ;
+
+ChangeDisplay:
+	//画面の幅を調整
+	##line = 300;
+	config "w"+str(##line);
+
+	//強調表示の読み込み
+	config "y+";
+	loadhilight $g_hilight_path, 0;
+
+	//強調1（黒色）
+	configcolor "[4][0]:0x00000000";
+	configcolor "[4][1]:0x00000000";
+	configcolor "[4][2]:0x00000000";
+	//強調2（白色）
+	configcolor "[7][0]:0x00FFFFFF";
+	configcolor "[7][1]:0x00FFFFFF";
+	configcolor "[7][2]:0x00000000";
+
+	config "z-h-d0d-a-";
+	config "xShowCR- xVertLine- xGuideLine- xOrikaeshiLine- xRuler- xLF- xUnderLine- xCharSpace- xFormLine-";
+	config "xColorUrl- xColorEmail- xColorFN- xShowEOF- xShowBox- xIndent- xKinsoku- xBlockquote- xBquoteItemized-";
+	config "xShowLineNo- xHilight+ xLastColor- xStripe- xColorNum-";
+	config "xCharSpace(0)";
+	return;
+
+ChangeFont:
+	//フォント名・フォントサイズ
+	config $g_font_config;
+
+	//太字
+	//config "b+";
+
+	return ;
+
+MakeTmpFile:
+	if(! strlen($g_tmp_filename)){
+		return false;
+	}
+	runex "cmd /C copy nul " + $g_tmp_filename, 1,
+		0, "",
+		0, "",
+		0, "",
+		0, "",
+		2, 0, 0;
+	return result;
+
+
+//テンポラリファイル作成サブルーチン
+GetTempFile:
+	$$tempdir = getenv("tmp");
+	if( leftstr( $$tempdir, 1 ) != "\\" ) {
+		$$tempdir = $$tempdir + "\\";
+	}
+	##n		= tickcount;
+	##end 	= ##n + 1000;
+	while(##n < ##end){
+	 	$$tempfile = $$tempdir + $g_tmpfile_base_name + str(##n);
+	 	if( !existfile( $$tempfile ) ) {
+			$g_tmp_filename = $$tempfile;
+			return true;
+		}
+	 	##n = ##n + 1;
+	}
+	message "テンポラリファイルが作成できません\n" + $$tempfile;
+	return false;
+
+
+RemoveTmpFile:
+	if(strlen($g_tmp_filename)){
+		deletefile $g_tmp_filename;
+		$g_tmp_filename="";
+	}
+	return ;
+
